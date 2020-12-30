@@ -9,19 +9,35 @@
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
+
+using namespace sf;
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
+    RenderWindow window(VideoMode(800, 600), "Arkanoid");
+    
+    RectangleShape paddle(Vector2f(50, 10));
+    paddle.setPosition(window.getSize().x / 2, window.getSize().y - 2 * paddle.getSize().y);
+    paddle.setFillColor(Color::Black);
+    const float speed = 5;
+    
     while (window.isOpen())
     {
-        sf::Event event;
+        Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == sf::Event::Closed)
+            if (event.type == Event::Closed)
                 window.close();
+            if (event.type == Event::KeyPressed)
+                switch(event.key.code)
+                {
+                    case Keyboard::Left:  paddle.move(-speed, 0); break;
+                    case Keyboard::Right: paddle.move( speed, 0); break;
+                }
         }
-        window.clear();
+        window.clear(Color::White);
+        window.draw(paddle);
         window.display();
     }
     return EXIT_SUCCESS;
