@@ -8,10 +8,9 @@ cmake_minimum_required(VERSION 3.18.4)
 project(Arkanoid)
 
 # Source files
-set(SOURCE "source/main.cpp")
-set(HEADER_FILES "include")
+set(SOURCE "game.cpp")
 
-add_executable(${PROJECT_NAME} ${SOURCE} ${HEADER_FILES})
+add_executable(${PROJECT_NAME} ${SOURCE})
 
 # Add SFML library dinamicly
 set(SFML_DIR "libraries/SFML/lib/cmake/SFML")
