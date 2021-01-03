@@ -17,6 +17,11 @@ using namespace sf;
 
 const float paddle_speed = 10;
 
+bool isColiding(Sprite a, Sprite b)
+{
+    return a.getGlobalBounds().intersects(b.getGlobalBounds());
+}
+
 //// GAME OBJECTS ////
 Sprite paddle;
 Sprite ball;
@@ -33,13 +38,13 @@ int main()
     
     paddle.setTexture(paddle_texture, true);
     paddle.setPosition(
-        window.getSize().x / 2,
+        (window.getSize().x + paddle.getTextureRect().width) / 2,
         window.getSize().y - 2 * paddle.getTextureRect().height);
 
     ball.setTexture(ball_texture, true);
     ball.setPosition(window.getSize().x / 2, window.getSize().y / 2);
-    Vector2f ball_movement = Vector2f(0, 1);
-
+    Vector2f ball_movement = Vector2f(4, 3);
+    
     //// GAME LOOP ////
     while (window.isOpen())
     {
@@ -67,6 +72,20 @@ int main()
         }
         
         //// UPDATE ////
+        if (ball.getPosition().x <= 0 || 
+            ball.getPosition().x + ball.getTextureRect().width >= window.getSize().x)
+        {
+            ball_movement.x = -ball_movement.x;
+        }
+        else if (ball.getPosition().y <= 0 || isColiding(ball, paddle))
+            ball_movement.y = -ball_movement.y;
+        else if (ball.getPosition().y + ball.getTextureRect().width >= window.getSize().y)
+        {
+            std::cout << "GAME OVER" << std::endl;
+            break;
+        }
+        
+        ball.move(ball_movement);
         
         //// RENDER ////
         window.clear(Color(50, 50, 50));
