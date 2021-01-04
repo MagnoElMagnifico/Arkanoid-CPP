@@ -8,6 +8,8 @@
  */
 
 #include <iostream>
+#include <vector>
+#include <cmath>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Graphics/Sprite.hpp>
@@ -15,7 +17,9 @@
 
 using namespace sf;
 
-const float paddle_speed = 10;
+const int blocks_number  = 9;
+const float paddle_speed = 30;
+Vector2f ball_movement(-3, -3);
 
 bool isColiding(Sprite a, Sprite b)
 {
@@ -25,6 +29,7 @@ bool isColiding(Sprite a, Sprite b)
 //// GAME OBJECTS ////
 Sprite paddle;
 Sprite ball;
+std::vector <Sprite> blocks;
 
 int main()
 {
@@ -32,19 +37,28 @@ int main()
     RenderWindow window(VideoMode(600, 600), "Arkanoid");
     window.setVerticalSyncEnabled(true);
 
-    Texture paddle_texture, ball_texture;
+    Texture paddle_texture, ball_texture, block_texture;
     paddle_texture.loadFromFile("resources/images/paddle.png");
     ball_texture  .loadFromFile("resources/images/ball.png");
-    
+    block_texture .loadFromFile("resources/images/block01.png");
+
     paddle.setTexture(paddle_texture, true);
     paddle.setPosition(
-        (window.getSize().x + paddle.getTextureRect().width) / 2,
-        window.getSize().y - 2 * paddle.getTextureRect().height);
+            (window.getSize().x + paddle.getTextureRect().width) / 2,
+             window.getSize().y - paddle.getTextureRect().height * 2);
 
     ball.setTexture(ball_texture, true);
     ball.setPosition(window.getSize().x / 2, window.getSize().y / 2);
-    Vector2f ball_movement = Vector2f(4, 3);
-    
+
+    for (int i = 0; i < blocks_number; i++)
+    {
+        blocks.push_back(Sprite());
+        blocks.back().setTexture(block_texture);
+        blocks.back().setPosition(
+            i % int(std::sqrt(blocks_number)) * blocks.back().getTextureRect().width,
+            i / int(std::sqrt(blocks_number)) * blocks.back().getTextureRect().height);
+    }
+
     //// GAME LOOP ////
     while (window.isOpen())
     {
@@ -52,8 +66,7 @@ int main()
         Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == Event::Closed)
-                window.close();
+            if (event.type == Event::Closed) window.close();
             if (event.type == Event::KeyPressed)
             {
                 switch (event.key.code)
@@ -70,26 +83,55 @@ int main()
                 }
             }
         }
-        
+
         //// UPDATE ////
-        if (ball.getPosition().x <= 0 || 
-            ball.getPosition().x + ball.getTextureRect().width >= window.getSize().x)
-        {
+        ball.move(ball_movement.x, 0);
+        if (ball.getPosition().x <= 0 || ball.getPosition().x + ball.getTextureRect().width >= window.getSize().x)
             ball_movement.x = -ball_movement.x;
+        else
+        {
+            for (int i = 0; i < blocks.size(); i++)
+            {
+                if (isColiding(ball, blocks[i]))
+                {
+                    ball_movement.x = -ball_movement.x;
+                    blocks.erase(blocks.begin() + i);
+                    break;
+                }
+            }
         }
-        else if (ball.getPosition().y <= 0 || isColiding(ball, paddle))
-            ball_movement.y = -ball_movement.y;
+        
+        ball.move(0, ball_movement.y);
+        if (isColiding(ball, paddle) || ball.getPosition().y <= 0) ball_movement.y = -ball_movement.y;
+        else
+        {
+            for (int i = 0; i < blocks.size(); i ++)
+            {
+                if (isColiding(ball, blocks[i]))
+                {
+                    ball_movement.y = -ball_movement.y;
+                    blocks.erase(blocks.begin() + i);
+                    break;
+                }
+            }
+        }
+        
+        // Check for the game state
+        if (blocks.empty())
+        {
+            std::cout << "VICTORY" << std::endl;
+            window.close();
+        }
         else if (ball.getPosition().y + ball.getTextureRect().width >= window.getSize().y)
         {
             std::cout << "GAME OVER" << std::endl;
-            break;
+            window.close();
         }
-        
-        ball.move(ball_movement);
-        
+
         //// RENDER ////
         window.clear(Color(50, 50, 50));
 
+        for (auto& block : blocks) window.draw(block);
         window.draw(paddle);
         window.draw(ball);
 
